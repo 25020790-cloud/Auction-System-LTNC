@@ -1,16 +1,26 @@
+
 package com.auction.client;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+
 public class HelloApplication extends Application {
+
     @Override
-    public void start(Stage stage) {
-        stage.setTitle("Auction System");
-        stage.setScene(new Scene(new StackPane(new Label("Auction System")), 480, 320));
+    public void start(Stage stage) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(
+                HelloApplication.class.getResource("/login-view.fxml")
+        );
+
+        Scene scene = new Scene(fxmlLoader.load());
+
+        stage.setTitle("Auction System - Đăng nhập");
+        stage.setScene(scene);
+        stage.setResizable(false);
         stage.show();
     }
 

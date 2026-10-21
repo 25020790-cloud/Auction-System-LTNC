@@ -1,0 +1,44 @@
+
+.login-root {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #ffffff,
+            #eaf4ff
+    );
+    -fx-font-family: "Arial";
+}
+
+.title {
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1769aa;
+}
+
+.subtitle {
+    -fx-font-size: 15px;
+    -fx-text-fill: #526579;
+}
+
+.text-field,
+.password-field {
+    -fx-pref-height: 42px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #cbd9e8;
+    -fx-background-color: white;
+    -fx-padding: 8px;
+}
+
+.login-button {
+    -fx-pref-height: 42px;
+    -fx-background-color: #1976d2;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.login-button:hover {
+    -fx-background-color: #125ca1;
+}
