@@ -10,7 +10,7 @@
 <HBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.auction.client.LoginController"
-      stylesheets="@login-view.css"
+      stylesheets="@login-style.css"
       styleClass="root-container"
       prefWidth="900"
       prefHeight="560">

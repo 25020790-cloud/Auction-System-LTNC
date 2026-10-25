@@ -11,7 +11,7 @@ import java.net.URL;
 public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        URL fxmlUrl = HelloApplication.class.getResource("/login-view.fxml");
+        URL fxmlUrl = HelloApplication.class.getResource("/com/auction/client/login-view.fxml");
 
         if (fxmlUrl == null) {
             throw new IOException("Không tìm thấy file login-view.fxml");

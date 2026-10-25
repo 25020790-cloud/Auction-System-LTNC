@@ -14,7 +14,6 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 
 public class LoginController {
 
@@ -128,7 +127,7 @@ public class LoginController {
             fxmlFile = "admin-dashboard-view.fxml";
             windowTitle = "Aureus — Admin Control Panel";
         } else {
-            fxmlFile = "auction-list-view.fxml";
+            fxmlFile = "com/auction/client/auction-list-view.fxml";
             windowTitle = "Luxury Auctions — Danh sách sản phẩm";
         }
 
