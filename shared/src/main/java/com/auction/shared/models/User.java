@@ -10,7 +10,7 @@ public abstract class User extends Entity {
     private String fullName;
     protected Role role;
 
-    // Constructor không tham số (Bắt buộc cho Gson)
+    // Constructor không tham số cho GSON
     public User() {
         super();
     }
