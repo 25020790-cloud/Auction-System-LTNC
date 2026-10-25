@@ -1,6 +1,5 @@
 package com.auction.server.network;
 
-import com.auction.shared.constants.Actions;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,8 +39,7 @@ public class ClientHandler implements Runnable {
 
     private void handleMessage(String rawJson) {
         System.out.println("Server nhận từ [" + clientSocket.getRemoteSocketAddress() + "]: " + rawJson);
-        // Phản hồi mẫu kiểm tra kết nối
-        sendMessage("{\"action\":\"" + Actions.AUCTION_UPDATE + "\",\"payload\":\"Connected successfully\"}");
+        sendMessage(server.handleMessage(rawJson));
     }
 
     public void sendMessage(String jsonMessage) {
