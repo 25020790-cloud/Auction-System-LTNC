@@ -1,10 +1,5 @@
 package com.auction.server.network;
 
-import com.auction.server.core.AuctionOrchestrator;
-import com.auction.shared.constants.Actions;
-import com.auction.shared.network.MessageDTO;
-import com.google.gson.Gson;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,23 +15,9 @@ public class SocketServer {
     private final Set<ClientHandler> clients = Collections.synchronizedSet(new HashSet<>());
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private volatile boolean isRunning = false;
-    private volatile AuctionOrchestrator orchestrator;
-    private final Gson gson = new Gson();
 
     public SocketServer(int port) {
         this.port = port;
-    }
-
-    public void setOrchestrator(AuctionOrchestrator orchestrator) {
-        this.orchestrator = orchestrator;
-    }
-
-    public String handleMessage(String rawJson) {
-        AuctionOrchestrator currentOrchestrator = orchestrator;
-        if (currentOrchestrator != null) {
-            return currentOrchestrator.handleClientMessage(rawJson);
-        }
-        return gson.toJson(new MessageDTO(Actions.AUCTION_UPDATE, "server", "Connected successfully"));
     }
 
     public void start() {

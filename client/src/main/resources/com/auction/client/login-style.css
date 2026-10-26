@@ -1,0 +1,53 @@
+.root-container { -fx-background-color: #FFFFFF; }
+.left-panel { -fx-background-color: #0A0A0A; }
+.image-container {
+    -fx-background-color: #0D0D0D;
+}
+.overlay-rect {
+    -fx-fill: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+}
+.brand-name { -fx-text-fill: #D4AF37; -fx-font-family: "Georgia"; -fx-font-size: 30px; -fx-font-weight: bold; -fx-letter-spacing: 8px; }
+.brand-subtitle { -fx-text-fill: #C8A96E; -fx-font-family: "Georgia"; -fx-font-size: 11px; -fx-letter-spacing: 6px; }
+.brand-tagline { -fx-text-fill: #8A8A8A; -fx-font-family: "Georgia"; -fx-font-style: italic; -fx-font-size: 12px; -fx-padding: 8 0 0 0; }
+.gold-line { -fx-stroke: #D4AF37; -fx-stroke-width: 1; -fx-opacity: 0.8; }
+.right-panel { -fx-background-color: #F7F7F4; }
+.form-card { -fx-background-color: transparent; -fx-padding: 0 0 0 4; }
+.form-title { -fx-text-fill: #0A0A0A; -fx-font-family: "Georgia"; -fx-font-size: 34px; -fx-font-weight: bold; }
+.form-desc { -fx-text-fill: #9A9A92; -fx-font-family: "Georgia"; -fx-font-size: 12.5px; -fx-font-style: italic; -fx-padding: 4 0 0 0; }
+.field-label { -fx-text-fill: #3A3A3A; -fx-font-family: "Arial"; -fx-font-size: 10.5px; -fx-font-weight: bold; -fx-letter-spacing: 2px; }
+.input-field { -fx-background-color: #FFFFFF; -fx-background-radius: 0; -fx-border-color: #D0CFC8; -fx-border-width: 0 0 1.5 0; -fx-border-radius: 0; -fx-font-family: "Arial"; -fx-font-size: 13.5px; -fx-text-fill: #1A1A1A; -fx-prompt-text-fill: #C0BEB6; -fx-padding: 10 4 10 4; -fx-pref-height: 42px; }
+.input-field:focused { -fx-border-color: #D4AF37; -fx-background-color: #FEFDF8; }
+.link-text { -fx-text-fill: #9A9A92; -fx-font-family: "Arial"; -fx-font-size: 11.5px; -fx-cursor: hand; -fx-padding: 0; }
+.link-text:hover { -fx-text-fill: #D4AF37; }
+.btn-login { -fx-background-color: #0A0A0A; -fx-background-radius: 0; -fx-border-color: #D4AF37; -fx-border-width: 1.5; -fx-border-radius: 0; -fx-text-fill: #D4AF37; -fx-font-family: "Arial"; -fx-font-size: 12px; -fx-font-weight: bold; -fx-letter-spacing: 3px; -fx-pref-height: 46px; -fx-cursor: hand; }
+.btn-login:hover { -fx-background-color: #D4AF37; -fx-text-fill: #0A0A0A; }
+.divider-line { -fx-stroke: #DDDDD8; -fx-stroke-width: 0.8; }
+.divider-label { -fx-text-fill: #BBBBB5; -fx-font-family: "Arial"; -fx-font-size: 10px; -fx-letter-spacing: 1px; }
+.signup-hint { -fx-text-fill: #8A8A85; -fx-font-family: "Arial"; -fx-font-size: 12px; }
+.link-signup { -fx-text-fill: #D4AF37; -fx-font-family: "Arial"; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 0; }
+.link-signup:hover { -fx-text-fill: #B8942E; -fx-underline: true; }
+
+.role-toggle-group {
+    -fx-background-color: #1a1a1a;
+    -fx-background-radius: 8;
+    -fx-border-color: #333333;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.role-toggle {
+    -fx-background-color: transparent;
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 1px;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-background-radius: 7;
+}
+
+.role-toggle:selected {
+    -fx-background-color: #d4af37;
+    -fx-text-fill: #000000;
+    -fx-background-radius: 7;
+}
