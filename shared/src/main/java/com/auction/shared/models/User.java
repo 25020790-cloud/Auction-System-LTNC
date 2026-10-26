@@ -1,6 +1,5 @@
 package com.auction.shared.models;
 
-import com.auction.shared.models.base.Entity;
 import java.math.BigDecimal;
 
 public abstract class User extends Entity {
@@ -17,7 +16,7 @@ public abstract class User extends Entity {
 
     // Constructor có tham số cơ bản
     public User(String username, String password, String email, String fullName) {
-        super();
+        super(username);
         this.username = username;
         this.password = password;
         this.email = email;
@@ -54,6 +53,5 @@ public abstract class User extends Entity {
     public boolean canBid()  { return false; }
     public boolean canSell() { return false; }
 
-    @Override
     public abstract void printInfo();
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.auction.client.RegisterController"
+      alignment="CENTER" spacing="14" prefWidth="520" prefHeight="560"
+      style="-fx-background-color: #F7F7F4;">
+    <padding><Insets top="32" right="48" bottom="32" left="48"/></padding>
+    <Label text="Tạo tài khoản" style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+    <TextField fx:id="usernameField" promptText="Tên đăng nhập" maxWidth="320"/>
+    <TextField fx:id="emailField" promptText="Email" maxWidth="320"/>
+    <PasswordField fx:id="passwordField" promptText="Mật khẩu" maxWidth="320"/>
+    <ChoiceBox fx:id="roleChoiceBox" maxWidth="320"/>
+    <Button fx:id="registerButton" text="ĐĂNG KÝ" onAction="#handleRegister" maxWidth="320"/>
+    <Hyperlink text="Quay lại đăng nhập" onAction="#handleBackToLogin"/>
+</VBox>

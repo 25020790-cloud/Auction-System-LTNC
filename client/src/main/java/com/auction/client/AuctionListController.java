@@ -2,6 +2,8 @@
 package com.auction.client;
 
 import com.auction.client.network.SocketClientService;
+import com.auction.client.session.SessionContext;
+import com.auction.shared.constants.Actions;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -13,6 +15,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
@@ -22,7 +25,10 @@ import javafx.util.Duration;
 
 import java.io.ByteArrayInputStream;
 import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -64,8 +70,31 @@ public class AuctionListController {
     private void handleServerMessage(JsonObject message) {
         String action = getString(message, "action", "");
 
-        if (!"AUCTION_UPDATE".equals(action)
-                && !"AUCTION_LIST".equals(action)
+        if (Actions.BID_SUCCESS.equals(action)) {
+            Platform.runLater(() -> showMessage(
+                    Alert.AlertType.INFORMATION, "Đặt giá thành công",
+                    "Giá của phiên đấu giá đã được cập nhật."));
+            return;
+        }
+        if (Actions.BID_FAILED.equals(action)) {
+            Platform.runLater(() -> showMessage(
+                    Alert.AlertType.ERROR, "Không thể đặt giá",
+                    getString(message, "payload", "Yêu cầu không hợp lệ.")));
+            return;
+        }
+        if (Actions.ERROR.equals(action)) {
+            Platform.runLater(() -> showMessage(
+                    Alert.AlertType.ERROR, "Yêu cầu thất bại",
+                    getString(message, "payload", "Yêu cầu không hợp lệ.")));
+            return;
+        }
+        if (Actions.MY_BID_HISTORY.equals(action)) {
+            Platform.runLater(() -> showBidHistory(message.get("payload")));
+            return;
+        }
+
+        if (!Actions.AUCTION_UPDATE.equals(action)
+                && !Actions.AUCTION_LIST.equals(action)
                 && !"GET_AUCTIONS_SUCCESS".equals(action)) {
             return;
         }
@@ -78,8 +107,10 @@ public class AuctionListController {
 
         JsonArray auctions = null;
 
+        boolean fullList = false;
         if (payload.isJsonArray()) {
             auctions = payload.getAsJsonArray();
+            fullList = true;
 
         } else if (payload.isJsonObject()) {
             JsonObject data = payload.getAsJsonObject();
@@ -87,10 +118,16 @@ public class AuctionListController {
             if (data.has("auctions")
                     && data.get("auctions").isJsonArray()) {
                 auctions = data.getAsJsonArray("auctions");
+                fullList = true;
 
             } else if (data.has("items")
                     && data.get("items").isJsonArray()) {
                 auctions = data.getAsJsonArray("items");
+                fullList = true;
+            } else if (Actions.AUCTION_UPDATE.equals(action)
+                    && data.has("auctionId")) {
+                receivedAuctionUpdate(data);
+                return;
             }
         }
 
@@ -106,9 +143,30 @@ public class AuctionListController {
             }
         }
 
+        boolean replaceList = fullList;
         Platform.runLater(() -> {
-            auctionList.clear();
-            auctionList.addAll(received);
+            if (replaceList) {
+                auctionList.clear();
+                auctionList.addAll(received);
+            }
+            renderAuctionList();
+        });
+    }
+
+    private void receivedAuctionUpdate(JsonObject updatedAuction) {
+        Platform.runLater(() -> {
+            String updatedId = getString(updatedAuction, "auctionId", "");
+            boolean replaced = false;
+            for (int index = 0; index < auctionList.size(); index++) {
+                if (updatedId.equals(getString(auctionList.get(index), "auctionId", ""))) {
+                    auctionList.set(index, updatedAuction);
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                auctionList.add(updatedAuction);
+            }
             renderAuctionList();
         });
     }
@@ -135,7 +193,7 @@ public class AuctionListController {
             return false;
         }
 
-        boolean ended = isEnded(status);
+        boolean ended = isEnded(status) || hasExpired(auction);
 
         if ("ACTIVE".equals(currentStatus) && ended) {
             return false;
@@ -180,7 +238,8 @@ public class AuctionListController {
 
         String name = getString(
                 auction, "productName",
-                getString(auction, "name", "Sản phẩm")
+                getString(auction, "name",
+                        getString(auction, "itemId", "Sản phẩm"))
         );
 
         Label nameLabel = new Label(name);
@@ -204,7 +263,7 @@ public class AuctionListController {
         Label timerLabel = new Label();
         updateTimerLabel(auction, timerLabel);
 
-        boolean ended = isEnded(status);
+        boolean ended = isEnded(status) || hasExpired(auction);
 
         if (!ended) {
             Timeline timer = new Timeline(
@@ -226,18 +285,18 @@ public class AuctionListController {
         );
 
         detailButton.setMaxWidth(Double.MAX_VALUE);
-        detailButton.setDisable(ended);
+        boolean canBid = "BIDDER".equalsIgnoreCase(
+                SessionContext.getInstance().getCurrentRole());
+        detailButton.setDisable(ended || !canBid);
 
         detailButton.setOnAction(event -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Thông tin đấu giá");
-            alert.setHeaderText(name);
-            alert.setContentText(
-                    "Giá hiện tại: "
-                            + String.format(Locale.US, "%,.0f", price)
-                            + "\nChức năng chi tiết chưa được kết nối."
-            );
-            alert.showAndWait();
+            TextInputDialog dialog = new TextInputDialog(
+                    String.format(Locale.US, "%.0f", price + 1));
+            dialog.setTitle("Đặt giá");
+            dialog.setHeaderText(name);
+            dialog.setContentText("Giá mới (tối thiểu "
+                    + String.format(Locale.US, "%,.0f", price + 1) + "): ");
+            dialog.showAndWait().ifPresent(value -> submitBid(auction, value));
         });
 
         card.getChildren().addAll(
@@ -271,8 +330,7 @@ public class AuctionListController {
         }
 
         try {
-            LocalDateTime endTime =
-                    LocalDateTime.parse(endTimeText);
+            LocalDateTime endTime = parseEndTime(auction, endTimeText);
 
             java.time.Duration remaining =
                     java.time.Duration.between(
@@ -292,8 +350,54 @@ public class AuctionListController {
                     remaining.toSecondsPart()
             ));
 
-        } catch (DateTimeParseException e) {
+        } catch (DateTimeParseException | ArithmeticException e) {
             timerLabel.setText("");
+        }
+    }
+
+    private LocalDateTime parseEndTime(JsonObject auction, String endTimeText) {
+        JsonElement endTimeElement = auction.get("endTime");
+        if (endTimeElement != null && endTimeElement.isJsonPrimitive()
+                && endTimeElement.getAsJsonPrimitive().isNumber()) {
+            return Instant.ofEpochMilli(endTimeElement.getAsLong())
+                    .atZone(ZoneId.systemDefault()).toLocalDateTime();
+        }
+        return LocalDateTime.parse(endTimeText);
+    }
+
+    private boolean hasExpired(JsonObject auction) {
+        String endTimeText = getString(auction, "endTime", "");
+        if (endTimeText.isBlank()) {
+            return false;
+        }
+        try {
+            return !parseEndTime(auction, endTimeText).isAfter(LocalDateTime.now());
+        } catch (DateTimeParseException | ArithmeticException exception) {
+            return false;
+        }
+    }
+
+    private void submitBid(JsonObject auction, String bidText) {
+        double amount;
+        try {
+            amount = Double.parseDouble(bidText.trim());
+        } catch (NumberFormatException exception) {
+            showMessage(Alert.AlertType.WARNING, "Giá không hợp lệ",
+                    "Hãy nhập giá dưới dạng số, ví dụ 1500.");
+            return;
+        }
+        if (!Double.isFinite(amount)) {
+            showMessage(Alert.AlertType.WARNING, "Giá không hợp lệ",
+                    "Giá phải là một số hữu hạn.");
+            return;
+        }
+
+        String userId = SessionContext.getInstance().getCurrentUserId();
+        String auctionId = getString(auction, "auctionId", "");
+        if (userId == null || auctionId.isBlank()
+                || !SocketClientService.getInstance().placeBid(auctionId, amount)) {
+            showMessage(Alert.AlertType.ERROR, "Lỗi kết nối",
+                    "Không gửi được giá. Hãy kiểm tra kết nối server.");
         }
     }
 
@@ -419,13 +523,10 @@ public class AuctionListController {
 
     @FXML
     private void handleOpenProfile() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Hồ sơ người dùng");
-        alert.setHeaderText("Thông tin tài khoản");
-        alert.setContentText(
-                "Chức năng xem hồ sơ chưa được kết nối."
-        );
-        alert.showAndWait();
+        SessionContext session = SessionContext.getInstance();
+        showMessage(Alert.AlertType.INFORMATION, "Hồ sơ người dùng", "Thông tin tài khoản",
+                "Tên đăng nhập: " + valueOrFallback(session.getCurrentUsername())
+                        + "\nVai trò: " + valueOrFallback(session.getCurrentRole()));
     }
 
     @FXML
@@ -437,28 +538,70 @@ public class AuctionListController {
 
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                // Chưa chuyển màn hình vì cần biết
-                // đường dẫn FXML đăng nhập và cách đóng socket.
-                Alert info = new Alert(Alert.AlertType.INFORMATION);
-                info.setTitle("Đăng xuất");
-                info.setHeaderText(null);
-                info.setContentText(
-                        "Bạn đã xác nhận đăng xuất. "
-                                + "Cần kết nối thêm logic đăng xuất của ứng dụng."
-                );
-                info.showAndWait();
+                SocketClientService.getInstance().logout();
+                SessionContext.getInstance().logout();
+                SocketClientService.getInstance().setMessageListener(null);
+                try {
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                            getClass().getResource("/com/auction/client/login-view.fxml"));
+                    javafx.scene.Parent root = loader.load();
+                    javafx.stage.Stage stage = (javafx.stage.Stage)
+                            productGrid.getScene().getWindow();
+                    stage.setScene(new javafx.scene.Scene(root));
+                    stage.setTitle("Auctions - Đăng nhập");
+                } catch (java.io.IOException exception) {
+                    showMessage(Alert.AlertType.ERROR, "Lỗi", "Không thể mở màn hình đăng nhập.");
+                }
             }
         });
     }
 
     @FXML
     private void handleMyBidHistory() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Lịch sử đấu giá");
-        alert.setHeaderText("My Bids");
-        alert.setContentText(
-                "Chức năng xem lịch sử đấu giá chưa được kết nối."
-        );
+        if (!SocketClientService.getInstance().requestMyBidHistory()) {
+            showMessage(Alert.AlertType.ERROR, "Lịch sử đấu giá",
+                    "Không thể tải lịch sử. Hãy kiểm tra kết nối server.");
+        }
+    }
+
+    private void showBidHistory(JsonElement payload) {
+        if (payload == null || !payload.isJsonArray() || payload.getAsJsonArray().isEmpty()) {
+            showMessage(Alert.AlertType.INFORMATION, "Lịch sử đấu giá", "My Bids",
+                    "Bạn chưa có lượt đặt giá nào.");
+            return;
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                .withZone(ZoneId.systemDefault());
+        List<String> entries = new ArrayList<>();
+        for (JsonElement element : payload.getAsJsonArray()) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject transaction = element.getAsJsonObject();
+            String auctionId = getString(transaction, "auctionId", "?");
+            double amount = getNumber(transaction, "bidAmount", 0);
+            long timestamp = (long) getNumber(transaction, "timestamp", 0);
+            entries.add(auctionId + " — " + String.format(Locale.US, "%,.2f", amount)
+                    + " — " + formatter.format(Instant.ofEpochMilli(timestamp)));
+        }
+        showMessage(Alert.AlertType.INFORMATION, "Lịch sử đấu giá", "My Bids",
+                String.join("\n", entries));
+    }
+
+    private String valueOrFallback(String value) {
+        return value == null || value.isBlank() ? "—" : value;
+    }
+
+    private void showMessage(Alert.AlertType type, String title, String content) {
+        showMessage(type, title, null, content);
+    }
+
+    private void showMessage(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
         alert.showAndWait();
     }
 }

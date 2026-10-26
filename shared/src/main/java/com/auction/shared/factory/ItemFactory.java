@@ -6,6 +6,8 @@ import com.auction.shared.models.Electronics;
 import com.auction.shared.models.Item;
 import com.auction.shared.models.Vehicle;
 
+import java.util.Locale;
+
 public class ItemFactory {
 
     /**
@@ -18,7 +20,7 @@ public class ItemFactory {
         }
 
         // Chuyển type về chữ thường để so sánh cho an toàn
-        switch (type.toLowerCase()) {
+        switch (type.toLowerCase(Locale.ROOT)) {
             case "electronics":
                 // extraInfo của đồ điện tử là số tháng bảo hành (cần ép kiểu sang số nguyên)
                 int warranty = Integer.parseInt(extraInfo);
@@ -26,11 +28,11 @@ public class ItemFactory {
                 
             case "art":
                 // extraInfo của nghệ thuật là tên tác giả
-                return new Art(id, name, description, extraInfo);
+                return new Art(extraInfo, id, name, description);
                 
             case "vehicle":
                 // extraInfo của xe cộ là hãng xe
-                return new Vehicle(id, name, description, extraInfo);
+                return new Vehicle(extraInfo, id, name, description);
                 
             default:
                 throw new IllegalArgumentException("Nhà máy không hỗ trợ tạo loại sản phẩm: " + type);

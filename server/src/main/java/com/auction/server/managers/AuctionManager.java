@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /** Manages active auctions and serializes bids to prevent race conditions. */
 public class AuctionManager {
@@ -41,30 +42,79 @@ public class AuctionManager {
      * exceeds the current price by at least the configured increment.
      */
     public synchronized boolean placeBid(String auctionId, String userId, double amount) {
+        return placeBidAndPersist(auctionId, userId, amount, ignored -> {}) != null;
+    }
+
+    /** Validates and applies a bid, rolling back in-memory state if persistence fails. */
+    public synchronized BidTransaction placeBidAndPersist(
+            String auctionId, String userId, double amount,
+            Consumer<BidTransaction> persist) {
+        if (persist == null) {
+            throw new IllegalArgumentException("Bid persistence callback is required");
+        }
         if (auctionId == null || userId == null || userId.isBlank() || !Double.isFinite(amount)) {
-            return false;
+            return null;
         }
 
         Auction auction = auctions.get(auctionId);
         if (auction == null || auction.getStatus() != Auction.Status.ACTIVE) {
-            return false;
+            return null;
         }
 
         if (System.currentTimeMillis() >= auction.getEndTime()) {
             auction.setStatus(Auction.Status.ENDED);
-            return false;
+            return null;
         }
 
         if (!Double.isFinite(auction.getCurrentPrice())
-                || amount <= auction.getCurrentPrice() + minimumBidIncrement) {
-            return false;
+                || amount < auction.getCurrentPrice() + minimumBidIncrement) {
+            return null;
         }
 
         BidTransaction transaction = new BidTransaction(auctionId, userId, amount);
+        double previousPrice = auction.getCurrentPrice();
+        String previousWinnerId = auction.getCurrentWinnerId();
         auction.setCurrentPrice(amount);
         auction.setCurrentWinnerId(userId);
-        bidHistory.computeIfAbsent(auctionId, ignored -> new ArrayList<>()).add(transaction);
-        return true;
+        List<BidTransaction> history = bidHistory.computeIfAbsent(
+                auctionId, ignored -> new ArrayList<>());
+        history.add(transaction);
+        try {
+            persist.accept(transaction);
+        } catch (RuntimeException exception) {
+            history.remove(history.size() - 1);
+            auction.setCurrentPrice(previousPrice);
+            auction.setCurrentWinnerId(previousWinnerId);
+            throw exception;
+        }
+        return transaction;
+    }
+
+    /** Replays a previously accepted bid while restoring persisted auction state. */
+    public synchronized void restoreBid(BidTransaction transaction) {
+        if (transaction == null || transaction.getAuctionId() == null
+                || transaction.getUserId() == null || transaction.getUserId().isBlank()
+                || !Double.isFinite(transaction.getBidAmount())) {
+            return;
+        }
+        Auction auction = auctions.get(transaction.getAuctionId());
+        if (auction == null || auction.getStatus() != Auction.Status.ACTIVE
+                || transaction.getBidAmount() < auction.getCurrentPrice() + minimumBidIncrement) {
+            return;
+        }
+        auction.setCurrentPrice(transaction.getBidAmount());
+        auction.setCurrentWinnerId(transaction.getUserId());
+        bidHistory.computeIfAbsent(transaction.getAuctionId(), ignored -> new ArrayList<>())
+                .add(transaction);
+    }
+
+    public synchronized void closeExpiredAuctions() {
+        long now = System.currentTimeMillis();
+        for (Auction auction : auctions.values()) {
+            if (auction.getStatus() == Auction.Status.ACTIVE && now >= auction.getEndTime()) {
+                auction.setStatus(Auction.Status.ENDED);
+            }
+        }
     }
 
     public Auction getAuction(String auctionId) {

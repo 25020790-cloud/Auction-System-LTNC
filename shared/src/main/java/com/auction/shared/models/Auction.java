@@ -14,6 +14,8 @@ public class Auction implements Serializable {
 
     private String auctionId;
     private String itemId;
+    private String productName;
+    private String category;
     private String sellerId;
     private double startPrice;
     private double currentPrice;
@@ -53,6 +55,22 @@ public class Auction implements Serializable {
 
     public void setItemId(String itemId) {
         this.itemId = itemId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public String getSellerId() {

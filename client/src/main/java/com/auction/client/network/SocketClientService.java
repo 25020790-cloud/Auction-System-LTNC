@@ -2,8 +2,8 @@
 package com.auction.client.network;
 
 import com.auction.shared.network.MessageDTO;
+import com.auction.shared.constants.Actions;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -21,8 +21,11 @@ public class SocketClientService {
     private static final SocketClientService INSTANCE =
             new SocketClientService();
 
-    private static final String HOST = "localhost";
-    private static final int PORT = 8080;
+    private static final String HOST = System.getProperty("auction.server.host",
+            System.getenv().getOrDefault("AUCTION_SERVER_HOST", "127.0.0.1"));
+    private static final int PORT = Integer.parseInt(
+            System.getProperty("auction.server.port",
+                    System.getenv().getOrDefault("AUCTION_SERVER_PORT", "8888")));
 
     private final Gson gson = new Gson();
 
@@ -102,13 +105,13 @@ public class SocketClientService {
         listenerThread.start();
     }
 
-    public synchronized void sendMessage(
+    public synchronized boolean sendMessage(
             String action,
             String sender,
             Object payload) {
 
         if (!ensureConnected()) {
-            return;
+            return false;
         }
 
         MessageDTO message =
@@ -118,7 +121,9 @@ public class SocketClientService {
 
         if (writer.checkError()) {
             System.err.println("Không gửi được dữ liệu đến server.");
+            return false;
         }
+        return true;
     }
 
     private void handleIncomingMessage(String json) {
@@ -152,7 +157,7 @@ public class SocketClientService {
         }
     }
 
-    public void login(
+    public boolean login(
             String username,
             String password,
             String role) {
@@ -162,24 +167,45 @@ public class SocketClientService {
         payload.addProperty("password", password);
         payload.addProperty("role", role);
 
-        sendMessage("LOGIN", username, payload);
+        return sendMessage(Actions.LOGIN, username, payload);
     }
 
-    public void registerUser(
+    public boolean registerUser(
             String username,
             String password,
-            String email) {
+            String email,
+            String role) {
 
         JsonObject payload = new JsonObject();
         payload.addProperty("username", username);
         payload.addProperty("password", password);
         payload.addProperty("email", email);
+        payload.addProperty("role", role);
 
-        sendMessage("REGISTER", username, payload);
+        return sendMessage(Actions.REGISTER, username, payload);
+    }
+
+    public boolean registerUser(String username, String password, String email) {
+        return registerUser(username, password, email, "BIDDER");
     }
 
     public void requestAuctionList() {
-        sendMessage("GET_AUCTIONS", "CLIENT", null);
+        sendMessage(Actions.GET_AUCTIONS, "CLIENT", null);
+    }
+
+    public boolean requestMyBidHistory() {
+        return sendMessage(Actions.GET_MY_BID_HISTORY, "CLIENT", null);
+    }
+
+    public boolean placeBid(String auctionId, double amount) {
+        JsonObject payload = new JsonObject();
+        payload.addProperty("auctionId", auctionId);
+        payload.addProperty("amount", amount);
+        return sendMessage(Actions.BID, "CLIENT", payload);
+    }
+
+    public boolean logout() {
+        return sendMessage(Actions.LOGOUT, "CLIENT", null);
     }
 
     public synchronized void cleanup() {

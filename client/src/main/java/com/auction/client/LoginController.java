@@ -2,6 +2,9 @@
 package com.auction.client;
 
 import com.auction.client.network.SocketClientService;
+import com.auction.client.session.SessionContext;
+import com.auction.shared.constants.Actions;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -60,23 +63,26 @@ public class LoginController {
 
         String selectedRole = getSelectedRole();
 
-        SocketClientService.getInstance()
-                .login(username, password, selectedRole);
+        if (!SocketClientService.getInstance().login(username, password, selectedRole)) {
+            loginButton.setDisable(false);
+            showAlert(Alert.AlertType.ERROR, "Lỗi kết nối",
+                    "Không gửi được yêu cầu đăng nhập. Hãy kiểm tra server đang chạy.");
+        }
     }
 
     private void handleServerMessage(JsonObject message) {
         String action = getString(message, "action", "");
         JsonObject payload = getObject(message, "payload");
 
-        if ("LOGIN_SUCCESS".equals(action)) {
+        if (Actions.LOGIN_SUCCESS.equals(action)) {
             Platform.runLater(() -> handleLoginSuccess(payload));
 
-        } else if ("LOGIN_FAILED".equals(action)
-                || "ERROR".equals(action)) {
-            String errorMessage = getString(
-                    payload, "message",
-                    "Đăng nhập thất bại. Vui lòng thử lại."
-            );
+        } else if (Actions.LOGIN_FAILED.equals(action)
+                || Actions.ERROR.equals(action)) {
+            JsonElement payloadElement = message.get("payload");
+            String errorMessage = payloadElement != null && payloadElement.isJsonPrimitive()
+                    ? payloadElement.getAsString()
+                    : getString(payload, "message", "Đăng nhập thất bại. Vui lòng thử lại.");
 
             Platform.runLater(() -> {
                 if (loginButton != null) {
@@ -117,24 +123,20 @@ public class LoginController {
             return;
         }
 
-        String fxmlFile;
         String windowTitle;
-
-        if ("SELLER".equalsIgnoreCase(role)) {
-            fxmlFile = "seller-dashboard-view.fxml";
-            windowTitle = "Aureus — Seller Dashboard";
-        } else if ("ADMIN".equalsIgnoreCase(role)) {
-            fxmlFile = "admin-dashboard-view.fxml";
-            windowTitle = "Aureus — Admin Control Panel";
-        } else {
-            fxmlFile = "com/auction/client/auction-list-view.fxml";
-            windowTitle = "Luxury Auctions — Danh sách sản phẩm";
-        }
+        windowTitle = "Luxury Auctions — Danh sách sản phẩm (" + role + ")";
 
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource(fxmlFile)
-            );
+            String username = getString(data, "username", "");
+            String userId = getString(data, "userId", username);
+            SessionContext.getInstance().login(userId, username, role);
+
+            java.net.URL auctionListUrl = getClass().getResource(
+                    "/com/auction/client/auction-list-view.fxml");
+            if (auctionListUrl == null) {
+                throw new IOException("Không tìm thấy giao diện danh sách đấu giá.");
+            }
+            FXMLLoader loader = new FXMLLoader(auctionListUrl);
 
             Parent root = loader.load();
 
@@ -148,6 +150,7 @@ public class LoginController {
             }
 
         } catch (IOException e) {
+            SessionContext.getInstance().logout();
             showAlert(
                     Alert.AlertType.ERROR,
                     "Lỗi",

@@ -1,4 +1,4 @@
-package com.example.shared.models.users;
+package com.auction.shared.models;
 
 import java.math.BigDecimal;
 import java.util.Objects;
