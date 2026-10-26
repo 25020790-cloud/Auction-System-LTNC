@@ -1,5 +1,5 @@
 package com.auction.shared.models;
- //Enum định nghĩa các vai trò trong hệ thống đấu giá kèm tên hiển thị
+//Enum định nghĩa các vai trò trong hệ thống đấu giá kèm tên hiển thị
 public enum Role {
     ADMIN("Quản trị viên"),
     SELLER("Người bán"),
