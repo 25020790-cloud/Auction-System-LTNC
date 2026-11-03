@@ -5,6 +5,7 @@ public abstract class User{
     protected String userName;
     protected String password;
     protected String email;
+    protected boolean active = true;
 
     public User(String userId, String userName, String password, String email) {
         this.userId = userId;
@@ -40,5 +41,13 @@ public abstract class User{
     }
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
