@@ -1,36 +1,28 @@
-# Compiled class file
+# Maven compilation outputs
+target/
+**/target/
 *.class
 
-# Log file
-*.log
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Virtual machine crash logs
-hs_err_pid*
-replay_pid*
-
-# === IntelliJ IDEA ===
+# IntelliJ IDEA project files
 .idea/
 *.iml
-*.ipr
 *.iws
+*.ipr
 out/
 **/out/
 
-# === Maven Build Outputs (Cho dự án đa module) ===
-target/
-**/target/
-dependency-reduced-pom.xml
+# Eclipse & NetBeans project files
+.settings/
+.classpath
+.project
+nbproject/
+build/
 
-# === App Data & System Files ===
-data/
+# Log & Temporary files
+*.log
+*.tmp
+*.bak
+
+# System OS files
 .DS_Store
 Thumbs.db
