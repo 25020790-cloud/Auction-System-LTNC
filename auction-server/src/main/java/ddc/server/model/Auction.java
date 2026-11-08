@@ -50,6 +50,7 @@ public class Auction extends AuctionSubject {
 
             currentPrice = newBid.getAmount();
             bidHistory.add(newBid);
+            notifyObservers(this, newBid);
             return true;
         } finally {
             lock.unlock();
@@ -61,10 +62,12 @@ public class Auction extends AuctionSubject {
         try {
             if (status == AuctionStatus.OPEN && currentTime >= startTime) {
                 status = AuctionStatus.RUNNING;
+                notifyObservers(this, null);
             }
 
             if (status == AuctionStatus.RUNNING && currentTime >= endTime) {
                 status = AuctionStatus.FINISHED;
+                notifyObservers(this, null);
             }
         } finally {
             lock.unlock();
@@ -84,6 +87,7 @@ public class Auction extends AuctionSubject {
 
             if (allowed) {
                 status = newStatus;
+                notifyObservers(this, null);
             }
             return allowed;
         } finally {
