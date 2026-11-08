@@ -6,34 +6,88 @@ import ddc.server.model.observer.AuctionSubject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Auction extends AuctionSubject {
     private String auctionId;
     private Item item;
     private Seller seller;
     private double currentPrice;
-    private String status;
+    private AuctionStatus status;
     private List<Bid> bidHistory;
 
+    // Thời gian bắt đầu và kết thúc tính bằng mili giây.
+    private final long startTime;
+    private final long endTime;
+
+    // Dùng khóa này để tránh hai bid cập nhật giá cùng lúc.
+    private final ReentrantLock lock = new ReentrantLock();
+
     public Auction(String auctionId, Item item, Seller seller) {
+        this(auctionId, item, seller, System.currentTimeMillis(), Long.MAX_VALUE);
+    }
+
+    public Auction(String auctionId, Item item, Seller seller, long startTime, long endTime) {
         this.auctionId = auctionId;
         this.item = item;
         this.seller = seller;
         this.currentPrice = item.getStartingPrice();
-        this.status = "OPEN";
+        this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
-    public Auction(String auctionId, Item item, Seller seller, double currentPrice,
-                   String status, List<Bid> bidHistory) {
-        this.auctionId = auctionId;
-        this.item = item;
-        this.seller = seller;
-        this.currentPrice = currentPrice;
-        this.status = status;
-        this.bidHistory = bidHistory;
-        if (this.bidHistory == null) {
-            this.bidHistory = new ArrayList<>();
+    public boolean placeBid(Bid newBid) {
+        lock.lock();
+        try {
+            if (newBid == null || newBid.getBidder() == null
+                    || !newBid.getBidder().isActive()
+                    || status != AuctionStatus.RUNNING
+                    || newBid.getAmount() <= currentPrice) {
+                return false;
+            }
+
+            currentPrice = newBid.getAmount();
+            bidHistory.add(newBid);
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void checkTimeAndUpdateStatus(long currentTime) {
+        lock.lock();
+        try {
+            if (status == AuctionStatus.OPEN && currentTime >= startTime) {
+                status = AuctionStatus.RUNNING;
+            }
+
+            if (status == AuctionStatus.RUNNING && currentTime >= endTime) {
+                status = AuctionStatus.FINISHED;
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // Trả về true nếu trạng thái mới hợp lệ.
+    public boolean setStatus(AuctionStatus newStatus) {
+        lock.lock();
+        try {
+            boolean allowed =
+                    (status == AuctionStatus.OPEN
+                            && (newStatus == AuctionStatus.RUNNING || newStatus == AuctionStatus.CANCELED))
+                    || (status == AuctionStatus.RUNNING
+                            && (newStatus == AuctionStatus.FINISHED || newStatus == AuctionStatus.CANCELED))
+                    || (status == AuctionStatus.FINISHED && newStatus == AuctionStatus.PAID);
+
+            if (allowed) {
+                status = newStatus;
+            }
+            return allowed;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -62,43 +116,59 @@ public class Auction extends AuctionSubject {
     }
 
     public double getCurrentPrice() {
-        return currentPrice;
+        lock.lock();
+        try {
+            return currentPrice;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setCurrentPrice(double currentPrice) {
-        this.currentPrice = currentPrice;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        if (status != null && !status.equals(this.status)) {
-            this.status = status;
-            notifyObservers(this, null);
+        lock.lock();
+        try {
+            this.currentPrice = currentPrice;
+        } finally {
+            lock.unlock();
         }
     }
 
-    public boolean placeBid(Bid newBid) {
-        if (newBid == null || newBid.getAmount() <= currentPrice) {
-            return false;
+    public AuctionStatus getStatus() {
+        lock.lock();
+        try {
+            return status;
+        } finally {
+            lock.unlock();
         }
-
-        currentPrice = newBid.getAmount();
-        bidHistory.add(newBid);
-        notifyObservers(this, newBid);
-        return true;
     }
 
     public List<Bid> getBidHistory() {
-        return bidHistory;
+        lock.lock();
+        try {
+            return new ArrayList<>(bidHistory);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setBidHistory(List<Bid> bidHistory) {
-        this.bidHistory = bidHistory;
-        if (this.bidHistory == null) {
-            this.bidHistory = new ArrayList<>();
+        lock.lock();
+        try {
+            if (bidHistory == null) {
+                this.bidHistory = new ArrayList<>();
+            } else {
+                this.bidHistory = new ArrayList<>(bidHistory);
+            }
+        } finally {
+            lock.unlock();
         }
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
     }
 }
