@@ -2,7 +2,7 @@ package ddc.server.model;
 
 import ddc.server.model.item.Item;
 import ddc.server.model.user.Seller;
-import ddc.server.model.observer.AuctionSubject;
+import ddc.server.observer.AuctionSubject;
 
 import java.util.ArrayList;
 import java.util.List;

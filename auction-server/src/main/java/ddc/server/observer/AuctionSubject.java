@@ -1,4 +1,4 @@
-package ddc.server.model.observer;
+package ddc.server.observer;
 
 import ddc.server.model.Auction;
 import ddc.server.model.Bid;
