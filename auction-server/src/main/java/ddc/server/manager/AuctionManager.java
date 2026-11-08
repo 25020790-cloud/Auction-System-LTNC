@@ -1,6 +1,7 @@
 package ddc.server.manager;
 
 import ddc.server.model.Auction;
+import ddc.server.model.Bid;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,5 +35,15 @@ public class AuctionManager {
             }
         }
         return null;
+    }
+
+    public boolean placeBid(String auctionId, Bid newBid) {
+        Auction auction = getAuctionById(auctionId);
+
+        if (auction == null) {
+            return false;
+        }
+
+        return auction.placeBid(newBid);
     }
 }
