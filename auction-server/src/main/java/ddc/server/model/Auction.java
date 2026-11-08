@@ -2,11 +2,12 @@ package ddc.server.model;
 
 import ddc.server.model.item.Item;
 import ddc.server.model.user.Seller;
+import ddc.server.model.observer.AuctionSubject;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Auction {
+public class Auction extends AuctionSubject {
     private String auctionId;
     private Item item;
     private Seller seller;
@@ -73,7 +74,21 @@ public class Auction {
     }
 
     public void setStatus(String status) {
-        this.status = status;
+        if (status != null && !status.equals(this.status)) {
+            this.status = status;
+            notifyObservers(this, null);
+        }
+    }
+
+    public boolean placeBid(Bid newBid) {
+        if (newBid == null || newBid.getAmount() <= currentPrice) {
+            return false;
+        }
+
+        currentPrice = newBid.getAmount();
+        bidHistory.add(newBid);
+        notifyObservers(this, newBid);
+        return true;
     }
 
     public List<Bid> getBidHistory() {
