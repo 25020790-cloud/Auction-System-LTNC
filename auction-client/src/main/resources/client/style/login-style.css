@@ -1,0 +1,136 @@
+/* GIAO DIỆN CHÍNH */
+.login-root {
+    -fx-background-color: linear-gradient(
+            to bottom right,
+            #FFFFFF,
+            #F5FAFF,
+            #EAF4FF
+    );
+    -fx-font-family: "Segoe UI";
+}
+
+.login-left {
+    -fx-background-color: transparent;
+    -fx-padding: 35 55 35 55;
+}
+
+.login-right {
+    -fx-background-color: transparent;
+    -fx-padding: 30;
+}
+
+/*LOGO VÀ TIÊU ĐỀ */
+
+.logo {
+    -fx-effect: dropshadow(
+            gaussian, rgba(0, 0, 0, 0.10),
+            8, 0, 0, 3
+    );
+}
+
+.heading {
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #102F4A;
+}
+
+.subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #718096;
+}
+
+/* NHÃN VÀ Ô NHẬP LIỆU */
+
+.field-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #263B50;
+}
+
+.input-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #D5E0EA;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+
+    -fx-padding: 11px 14px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #102F4A;
+    -fx-prompt-text-fill: #A0AEC0;
+}
+
+.input-field:focused {
+    -fx-border-color: #1769AA;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(
+            gaussian, rgba(23, 105, 170, 0.12),
+            6, 0, 0, 1
+    );
+}
+
+/* GHI NHỚ ĐĂNG NHẬP */
+
+.remember-check {
+    -fx-font-size: 13px;
+    -fx-text-fill: #526477;
+}
+
+.remember-check .box {
+    -fx-background-color: white;
+    -fx-border-color: #AAB8C5;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+}
+
+.remember-check:selected .box {
+    -fx-background-color: #1769AA;
+    -fx-border-color: #1769AA;
+}
+
+.remember-check:selected .mark {
+    -fx-background-color: white;
+}
+
+/* LINK */
+
+.forgot-link,
+.register-link {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1769AA;
+    -fx-underline: false;
+}
+
+.forgot-link:hover,
+.register-link:hover {
+    -fx-text-fill: #0D3E67;
+    -fx-underline: true;
+}
+
+.register-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748B;
+}
+
+/* NÚT ĐĂNG NHẬP */
+
+.login-button {
+    -fx-background-color: #123D5C;
+    -fx-background-radius: 8px;
+
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+
+    -fx-cursor: hand;
+    -fx-padding: 12px;
+}
+
+.login-button:hover {
+    -fx-background-color: #19577F;
+}
+
+.login-button:pressed {
+    -fx-background-color: #0B2D46;
+}

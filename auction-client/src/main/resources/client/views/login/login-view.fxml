@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.geometry.Insets?>
+
+<HBox fx:id="loginRoot"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="client.login.LoginController"
+      stylesheets="@../../style/login-style.css"
+      prefWidth="700"
+      prefHeight="430"
+      styleClass="login-root">
+
+    <!--Phần bên trái-->
+    <VBox fx:id="loginLeft"
+          HBox.hgrow="ALWAYS"
+          minWidth="350"
+          spacing="0"
+          alignment="CENTER_LEFT"
+          styleClass="login-left">
+
+        <padding>
+            <Insets top="25" right="30" bottom="20" left="30"/>
+        </padding>
+
+        <!--Logo-->
+        <ImageView fitWidth="70"
+                   fitHeight="70"
+                   preserveRatio="true"
+                   styleClass="logo">
+            <image>
+                <Image url="@../images/Logo.png"/>
+            </image>
+            <VBox.margin>
+                <Insets bottom="18"/>
+            </VBox.margin>
+        </ImageView>
+
+        <!--Tiêu đề-->
+        <VBox spacing="5" maxWidth="Infinity">
+            <Label text="Đăng nhập"
+                   styleClass="heading"/>
+
+            <Label text="Đăng nhập để tham gia đấu giá và quản lý tài khoản"
+                   styleClass="subtitle"/>
+        </VBox>
+
+        <Region minHeight="20"/>
+
+        <!--Email/SĐT/CCCD/MST-->
+        <VBox spacing="7">
+            <Label text="Email/SĐT/CCCD/MST"
+                   styleClass="field-label"/>
+
+            <TextField fx:id="emailField"
+                       promptText="Email/SĐT/CCCD/MST"
+                       prefHeight="40"
+                       maxWidth="Infinity"
+                       styleClass="input-field"/>
+        </VBox>
+
+        <Region minHeight="13"/>
+
+        <!--Mật khẩu-->
+        <VBox spacing="7">
+            <Label text="Mật khẩu"
+                   styleClass="field-label"/>
+
+            <PasswordField fx:id="passwordField"
+                           promptText="Mật khẩu"
+                           prefHeight="40"
+                           maxWidth="Infinity"
+                           styleClass="input-field"/>
+        </VBox>
+
+        <Region minHeight="15"/>
+
+        <!--Ghi nhớ và quên mật khẩu-->
+        <HBox alignment="CENTER_LEFT" maxWidth="Infinity">
+            <CheckBox fx:id="rememberCheckBox"
+                      text="Ghi nhớ đăng nhập"
+                      styleClass="remember-check"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Hyperlink text="Quên mật khẩu?"
+                       styleClass="forgot-link"/>
+        </HBox>
+
+        <!--Nút đăng nhập-->
+        <Button text="Đăng nhập"
+                onAction="#handleLogin"
+                prefHeight="42"
+                maxWidth="Infinity"
+                styleClass="login-button"/>
+
+        <Region minHeight="14"/>
+
+        <!--Đăng ký-->
+        <HBox alignment="CENTER" spacing="4" maxWidth="Infinity">
+
+            <Label text="Chưa có tài khoản?"
+                   styleClass="register-text"/>
+
+            <Hyperlink text="Đăng ký ngay"
+                       styleClass="register-link"/>
+
+        </HBox>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+    </VBox>
+
+    <!-- Phần bên phải -->
+    <StackPane fx:id="loginRight"
+               HBox.hgrow="ALWAYS"
+               minWidth="350"
+               styleClass="login-right">
+
+        <ImageView fx:id="loginImage"
+                   preserveRatio="true"
+                   smooth="true">
+
+            <image>
+                <Image url="@../images/login2.jpg"
+                       backgroundLoading="false"/>
+            </image>
+
+        </ImageView>
+
+    </StackPane>
+
+</HBox>
