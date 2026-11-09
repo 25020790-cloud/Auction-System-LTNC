@@ -1,5 +1,7 @@
 package ddc.server.model;
 
+import ddc.server.exception.AuctionClosedException;
+import ddc.server.exception.InvalidBidException;
 import ddc.server.model.item.Item;
 import ddc.server.model.user.Seller;
 import ddc.server.observer.AuctionSubject;
@@ -15,12 +17,10 @@ public class Auction extends AuctionSubject {
     private double currentPrice;
     private AuctionStatus status;
     private List<Bid> bidHistory;
-
-    // Thời gian bắt đầu và kết thúc tính bằng mili giây.
+    
     private final long startTime;
     private final long endTime;
 
-    // Dùng khóa này để tránh hai bid cập nhật giá cùng lúc.
     private final ReentrantLock lock = new ReentrantLock();
 
     public Auction(String auctionId, Item item, Seller seller) {
@@ -38,14 +38,19 @@ public class Auction extends AuctionSubject {
         this.endTime = endTime;
     }
 
-    public boolean placeBid(Bid newBid) {
+    public boolean placeBid(Bid newBid) throws InvalidBidException, AuctionClosedException{
         lock.lock();
         try {
-            if (newBid == null || newBid.getBidder() == null
-                    || !newBid.getBidder().isActive()
-                    || status != AuctionStatus.RUNNING
-                    || newBid.getAmount() <= currentPrice) {
-                return false;
+            if (status != AuctionStatus.RUNNING) {
+                throw new AuctionClosedException("Phiên đấu giá đã đóng hoặc chưa bắt đầu.");
+            }
+
+            if (newBid == null || newBid.getBidder() == null || !newBid.getBidder().isActive()) {
+                throw new InvalidBidException("Bid không hợp lệ hoặc người đấu giá không hoạt động.");
+            }
+
+            if (newBid.getAmount() <= currentPrice) {
+                throw new InvalidBidException(("Giá đặt (" + newBid.getAmount() + ") phải lớn hơn giá hiện tại (" + currentPrice + ")."));
             }
 
             currentPrice = newBid.getAmount();
@@ -74,7 +79,6 @@ public class Auction extends AuctionSubject {
         }
     }
 
-    // Trả về true nếu trạng thái mới hợp lệ.
     public boolean setStatus(AuctionStatus newStatus) {
         lock.lock();
         try {
