@@ -4,35 +4,38 @@ import ddc.server.exception.AuctionClosedException;
 import ddc.server.exception.AuthenticationException;
 import ddc.server.exception.InvalidBidException;
 import ddc.server.model.Auction;
-import ddc.server.model.AuctionStatus;
 import ddc.server.model.Bid;
 import ddc.server.model.user.User;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Lớp quản lý chung các phiên đấu giá và người dùng trong bộ nhớ.
+ */
 public class AuctionManager {
 
-    // 1. Áp dụng Singleton Pattern (Thread-safe với volatile + Double-Checked Locking)
     private static volatile AuctionManager instance;
 
-    // 2. Cấu trúc dữ liệu Thread-Safe tránh ConcurrentModificationException
+    // Các collection này an toàn khi luồng nền đang duyệt dữ liệu.
     private final Map<String, Auction> auctions;
     private final List<User> users;
 
-    // Quản lý luồng ngầm (Daemon Thread)
     private Thread statusCheckerThread;
-    private volatile boolean isRunning = false;
+    private volatile boolean isRunning;
 
     private AuctionManager() {
-        this.auctions = new ConcurrentHashMap<>();
-        this.users = new CopyOnWriteArrayList<>();
+        auctions = new ConcurrentHashMap<>();
+        users = new CopyOnWriteArrayList<>();
+        startStatusChecker();
     }
 
+    /**
+     * Trả về đối tượng AuctionManager duy nhất của chương trình.
+     */
     public static AuctionManager getInstance() {
         if (instance == null) {
             synchronized (AuctionManager.class) {
@@ -44,24 +47,26 @@ public class AuctionManager {
         return instance;
     }
 
-    // =========================================================================
-    // NHIỆM VỤ 1: LOGIC XÁC THỰC TÀI KHOẢN (AUTHENTICATION)
-    // =========================================================================
+    /**
+     * Thêm một người dùng để có thể xác thực khi đăng nhập.
+     */
+    public void addUser(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
+        users.add(user);
+    }
 
     /**
-     * Xác thực người dùng đăng nhập.
-     * @param username Tên đăng nhập (userName trong lớp User)
-     * @param password Mật khẩu
-     * @return Đối tượng User nếu hợp lệ
-     * @throws AuthenticationException Nếu sai tên đăng nhập hoặc mật khẩu
+     * Kiểm tra tên đăng nhập và mật khẩu trong danh sách users.
      */
     public User authenticateUser(String username, String password) throws AuthenticationException {
-        if (username == null || password == null || username.trim().isEmpty()) {
+        if (username == null || password == null) {
             throw new AuthenticationException("Tên đăng nhập hoặc mật khẩu không chính xác.");
         }
 
         for (User user : users) {
-            if (user.getUserName().equals(username) && user.getPassword().equals(password)) {
+            if (username.equals(user.getUserName()) && password.equals(user.getPassword())) {
                 return user;
             }
         }
@@ -69,82 +74,109 @@ public class AuctionManager {
         throw new AuthenticationException("Tên đăng nhập hoặc mật khẩu không chính xác.");
     }
 
-    // =========================================================================
-    // NHIỆM VỤ 2: ỦY QUYỀN VÀ QUẢN LÝ NGOẠI LỆ ĐẶT GIÁ (PROCESS BID)
-    // =========================================================================
+    /**
+     * Thêm hoặc cập nhật một phiên đấu giá theo auctionId.
+     */
+    public void addAuction(Auction auction) {
+        if (auction == null || auction.getAuctionId() == null) {
+            throw new IllegalArgumentException("Auction and auctionId cannot be null");
+        }
+        auctions.put(auction.getAuctionId(), auction);
+    }
+
+    public Auction getAuctionById(String auctionId) {
+        if (auctionId == null) {
+            return null;
+        }
+        return auctions.get(auctionId);
+    }
+
+    public Auction getAuctionById(int auctionId) {
+        return getAuctionById(String.valueOf(auctionId));
+    }
 
     /**
-     * Xử lý đặt giá theo auctionId kiểu String (Chuẩn theo Auction.java Tuần 7).
+     * Trả về bản sao để code bên ngoài không sửa trực tiếp collection bên trong.
      */
-    public boolean processBid(String auctionId, Bid bid) throws InvalidBidException, AuctionClosedException {
-        Auction auction = auctions.get(auctionId);
+    public List<Auction> getAllAuctions() {
+        return new ArrayList<>(auctions.values());
+    }
+
+    /**
+     * Tìm phiên đấu giá, sau đó ủy quyền việc kiểm tra và cập nhật giá cho Auction.
+     */
+    public boolean processBid(int auctionId, Bid bid)
+            throws InvalidBidException, AuctionClosedException {
+        return processBid(String.valueOf(auctionId), bid);
+    }
+
+    /**
+     * Phiên bản dùng String để phù hợp với auctionId trong lớp Auction hiện tại.
+     */
+    public boolean processBid(String auctionId, Bid bid)
+            throws InvalidBidException, AuctionClosedException {
+        Auction auction = getAuctionById(auctionId);
+
         if (auction == null) {
             throw new AuctionClosedException("Không tìm thấy phiên đấu giá với ID: " + auctionId);
         }
-        // Ủy quyền cho Auction.placeBid(bid) và để Exception truyền thẳng ra ngoài
+
         return auction.placeBid(bid);
     }
 
     /**
-     * Overloading: Hỗ trợ thêm tham số int auctionId theo đúng đặc tả file phân công Tuần 8
-     * (Giúp code của TV3 viết Unit Test hoặc TV5 gọi hàm không bị lỗi kiểu dữ liệu).
+     * Giữ lại tên hàm cũ để các lớp gọi trước đây vẫn hoạt động.
      */
-    public boolean processBid(int auctionId, Bid bid) throws InvalidBidException, AuctionClosedException {
-        return processBid(String.valueOf(auctionId), bid);
+    public boolean placeBid(String auctionId, Bid bid)
+            throws InvalidBidException, AuctionClosedException {
+        return processBid(auctionId, bid);
     }
 
-    // =========================================================================
-    // NHIỆM VỤ 3: LUỒNG NGẦM QUẢN LÝ TRẠNG THÁI (DAEMON THREAD)
-    // =========================================================================
-
     /**
-     * Khởi chạy Daemon Thread quét định kỳ danh sách phiên đấu giá.
+     * Khởi động một daemon thread để quét trạng thái mỗi giây.
      */
     public synchronized void startStatusChecker() {
         if (isRunning) {
-            return; // Tránh khởi tạo trùng lặp nhiều luồng
+            return;
         }
-        isRunning = true;
 
+        isRunning = true;
         statusCheckerThread = new Thread(() -> {
             while (isRunning) {
+                checkAuctionStatuses();
+
                 try {
-                    checkAuctionStatuses();
-                    Thread.sleep(1000); // Quét định kỳ mỗi 1 giây
-                } catch (InterruptedException e) {
+                    Thread.sleep(1000);
+                } catch (InterruptedException exception) {
                     Thread.currentThread().interrupt();
-                    break;
+                    isRunning = false;
                 }
             }
-        }, "Auction-Status-Checker-Daemon");
+        }, "Auction-Status-Checker");
 
-        // Đặt làm Daemon Thread để luồng tự động tắt khi ứng dụng chính kết thúc
         statusCheckerThread.setDaemon(true);
         statusCheckerThread.start();
     }
 
     /**
-     * Dừng luồng quét trạng thái an toàn.
+     * Dừng daemon thread khi ứng dụng không cần quản lý đấu giá nữa.
      */
     public synchronized void stopStatusChecker() {
         isRunning = false;
+
         if (statusCheckerThread != null) {
             statusCheckerThread.interrupt();
         }
     }
 
     /**
-     * Quét và tự động chuyển trạng thái phiên:
-     * OPEN -> RUNNING (khi chạm startTime)
-     * RUNNING -> FINISHED (khi chạm endTime)
+     * Auction tự chuyển OPEN -> RUNNING và RUNNING -> FINISHED theo thời gian hiện tại.
      */
     public void checkAuctionStatuses() {
-        LocalDateTime now = LocalDateTime.now();
+        long currentTime = System.currentTimeMillis();
 
-        // Duyệt trên ConcurrentHashMap hoàn toàn Thread-safe, không bị ConcurrentModificationException
         for (Auction auction : auctions.values()) {
-            AuctionStatus currentStatus = auction.getStatus();
-
-            if (currentStatus == AuctionStatus.OPEN) {
-                if (auction.getStartTime() != null && !now.isBefore(auction.getStartTime())) {
-                    auction
+            auction.checkTimeAndUpdateStatus(currentTime);
+        }
+    }
+}
