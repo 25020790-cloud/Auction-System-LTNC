@@ -1,14 +1,15 @@
 package client.login;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.TextField;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Alert;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.image.ImageView;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import java.io.IOException;
 
 public class LoginController {
     @FXML
@@ -31,6 +32,9 @@ public class LoginController {
 
     @FXML
     private ImageView loginImage;
+
+    @FXML
+    private Button loginButton;
 
     @FXML
     public void initialize() {
@@ -57,5 +61,29 @@ public class LoginController {
         System.out.println("Email: " + email);
         System.out.println("Password: " + password);
         System.out.println("Ghi nhớ đăng nhập: " + rememberCheckBox.isSelected());
+
+        Stage stage = (Stage) loginButton.getScene().getWindow();
+
+        try {
+            // Tải giao diện đấu giá
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/views/auction/auction-view.fxml"));
+
+            Scene scene = new Scene(loader.load());
+
+            // Chuyển sang màn hình đấu giá
+            stage.setScene(scene);
+            stage.setTitle("Auction System");
+
+            stage.setMaximized(true);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi");
+            alert.setHeaderText("Không thể mở màn hình đấu giá");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
     }
 }

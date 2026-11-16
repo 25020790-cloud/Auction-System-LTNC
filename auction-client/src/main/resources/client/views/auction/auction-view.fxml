@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.ImageView?>
+
+<?import javafx.scene.image.Image?>
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.auction.AuctionController"
+            stylesheets="@../../style/auction-style.css">
+    <!--Thanh điều hướng-->
+    <top>
+        <VBox styleClass="header">
+            <padding>
+               <Insets top="15" right="35" bottom="15" left="35"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="20">
+                <ImageView fitWidth="45"
+                           fitHeight="45"
+                           preserveRatio="true">
+                    <image>
+                        <Image url="@../images/Logo.png"/>
+                    </image>
+                </ImageView>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <TextField fx:id="searchField"
+                           promptText="⌕ Tìm kiếm phiên đấu giá..."
+                           styleClass="search-field"
+                           prefWidth="435"
+                           maxWidth="435"
+                           onKeyReleased="#handleSearch"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label text="Xin chào, Người dùng"
+                       styleClass="user-label"/>
+
+                <Button text="Đăng xuất"
+                        styleClass="logout-button"
+                        onAction="#handleLogout"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!--Danh sách phiên đấu giá-->
+    <center>
+        <ScrollPane fitToWidth="true"
+                    styleClass="content-scroll">
+            <VBox spacing="25">
+                <padding>
+                    <Insets top="30" right="35" bottom="35" left="35"/>
+                </padding>
+
+                <!--Tiêu đề trang-->
+                <VBox spacing="7">
+                    <Label text="Danh sách phiên đấu giá"
+                           styleClass="page-title"/>
+                    <Label text="Khám phá và tham giá các phiên đấu giá đang mở"
+                           styleClass="page-description"/>
+                </VBox>
+
+                <!--Phần thống kê-->
+                <HBox spacing="15">
+                    <VBox styleClass="start-card"
+                          HBox.hgrow="ALWAYS">
+                        <Label text="Tổng số phiên"
+                               styleClass="stat-title"/>
+                        <Label fx:id="totalCount"
+                               text="0"
+                               styleClass="stat-number"/>
+                    </VBox>
+
+                    <VBox styleClass="start-card"
+                          HBox.hgrow="ALWAYS">
+                        <Label text="Đang diễn ra"
+                               styleClass="stat-title"/>
+                        <Label fx:id="activeCount"
+                               text="0"
+                               styleClass="stat-number"/>
+                    </VBox>
+
+                    <VBox styleClass="start-card"
+                          HBox.hgrow="ALWAYS">
+                        <Label text="Sắp diễn ra"
+                               styleClass="stat-title"/>
+                        <Label fx:id="upcomingCount"
+                               text="0"
+                               styleClass="stat-number"/>
+                    </VBox>
+                </HBox>
+
+                <!--Tiêu đề khu vực danh sách-->
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="Các phiên đấu giá"
+                           styleClass="section-heading"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="resultCount"
+                           text="0 kết quả"
+                           styleClass="result-count"/>
+                </HBox>
+
+                <!--Khu vực hiển thị danh sách phiên đấu giá-->
+                <FlowPane fx:id="auctionCards"
+                          hgap="20"
+                          vgap="20"
+                          prefWrapLength="900"
+                          styleClass="auction-grid"/>
+
+                <!--Thông báo không có kết quả-->
+                <Label fx:id="emptyLabel"
+                       text="Không tìm thấy phiên đấu giá phù hợp"
+                       visible="false"
+                       managed="false"
+                       styleClass="empty-label"/>
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <!--Thanh sidebar-->
+    <right>
+        <VBox styleClass="sidebar" spacing="18">
+            <padding>
+                <Insets top="30" right="20" bottom="25" left="20"/>
+            </padding>
+
+            <!--Danh mục-->
+            <Label text="DANH MỤC"
+                   styleClass="section-title"/>
+            <ComboBox fx:id="categoryComboBox"
+                      promptText="Tất cả danh mục"
+                      maxWidth="Infinity"
+                      onAction="#handleFilter"/>
+
+            <Separator/>
+
+            <!--Trạng thái-->
+            <Label text="TRẠNG THÁI"
+                   styleClass="section-title"/>
+            <ComboBox fx:id="statusComboBox"
+                      promptText="Tất ca trạng thái"
+                      maxWidth="Infinity"
+                      onAction="#handleFilter"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+        </VBox>
+    </right>
+
+</BorderPane>

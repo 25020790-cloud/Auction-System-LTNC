@@ -92,7 +92,8 @@
         </HBox>
 
         <!--Nút đăng nhập-->
-        <Button text="Đăng nhập"
+        <Button fx:id="loginButton"
+                text="Đăng nhập"
                 onAction="#handleLogin"
                 prefHeight="42"
                 maxWidth="Infinity"
